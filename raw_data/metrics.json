@@ -1,0 +1,42 @@
+{
+    "metrics": ["Division", "Club", "Unique ID", "Player", "Position", "Best Pos", "Age", "Salary", "Transfer Value", "Minutes", 
+        "xGP", "Goals Allowed", 
+        "Fouls Against", 
+        "Tck A", "Tck C", "Blk", "Clearances", "Itc", "Poss Won", 
+        "Poss Lost", "PsP", "Drb", "Pas A", "Ps C", 
+        "Cr A", "Cr C", "Key", 
+        "Shots", "ShT", 
+        "Hdrs A", "Hdrs", "Sprints", "Dist"
+    ],
+    "exclude" : [
+        "Division", "Club", "Unique ID", "Player", "Position", "Best Pos", "Age", "Salary", "Transfer Value", "Minutes", 
+        "count",
+        "Poss Lost/90",
+        "Poss Won/90",
+        "Sprints/90", "Dist/90",
+        "league_weight"
+    ],
+    "rank_cols" : [
+        "xGP/90", "Goals Allowed/90", "xGP%", 
+        "Tck A/90", "Tck C/90", "Tackle%", "Blk/90", "Clearances/90", "Itc/90", "Poss Won/90",
+        "Poss Lost/90", "PsP/90", "Drb/90", "Pas A/90", "Ps C/90", "Pass%", 
+        "Cr A/90", "Cr C/90", "Cross%", "Key/90", "Prog%",
+        "Shots/90", "ShT/90", "Shoot%",
+        "Hdrs%", "Loss%", "Sprints/90", "Dist/90"
+    ],
+    "pizza": [
+        "xGP%",
+        "Tackle%", "Blk/90_adj", "Clearances/90_adj", "Itc/90_adj", "Poss Won/90_adj", 
+        "Loss%", "Prog%", "Drb/90_adj", 
+        "Pass%", "Key/90_adj", "Cross%",
+        "Shots/90_adj", "Shoot%", 
+        "Hdrs%", "Sprints/90_adj", "Dist/90_adj"
+    ],
+    "category": {
+        "Keeper": 1,
+        "Defense": 5,
+        "Progression": 5,
+        "Shoot": 2,
+        "Physical": 3
+    }
+}
