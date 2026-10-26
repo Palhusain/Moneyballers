@@ -1,1 +1,1 @@
-Sebuah python-based program untuk sereis Moneyballers oleh @MustermannFM
+Sebuah python-based program untuk series Moneyballers oleh @MustermannFM
