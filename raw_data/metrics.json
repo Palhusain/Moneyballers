@@ -1,20 +1,16 @@
 {
-    "metrics": ["Division", "Club", "Unique ID", "Player", "Position", "Best Pos", "Age", "Salary", "Transfer Value", "Minutes", 
-        "xGP", "Goals Allowed", 
-        "Fouls Against", 
-        "Tck A", "Tck C", "Blk", "Clearances", "Itc", "Poss Won", 
-        "Poss Lost", "PsP", "Drb", "Pas A", "Ps C", 
-        "Cr A", "Cr C", "Key", 
-        "Shots", "ShT", 
-        "Hdrs A", "Hdrs", "Sprints", "Dist"
+    "metrics": ["Unique ID", "Name", "Best Pos", "Age", "Club", "Based In", "Division", "Transfer Value", 
+        "Salary", "Expires", "Minutes", "Goals Allowed", "xGP", "Svt", "Pens Saved", "Blk", "Shts Blckd", 
+        "Clearances", "Itc", "Tck A", "K Tck", "Hdrs A", "Hdrs", "Pres A", "Pres C", "Poss Won/90", "Fouls Made", 
+        "Off", "Yel", "Red cards", "Pas A", "Ps C", "PsP", "OP-KP/90", "xA", "Drb", "Fouls Against", "Distance", 
+        "Sprints/90", "Poss Lost/90", "Shots", "Goals", "xG"
     ],
-    "exclude" : [
-        "Division", "Club", "Unique ID", "Player", "Position", "Best Pos", "Age", "Salary", "Transfer Value", "Minutes", 
-        "count",
-        "Poss Lost/90",
-        "Poss Won/90",
-        "Sprints/90", "Dist/90",
-        "league_weight"
+    "basis" : [
+        "Unique ID", "Name", "Best Pos", "Age", "Club", "Based In", "Division", "Transfer Value", 
+        "Salary", "Expires", "Minutes"
+    ],
+    "p90" : [
+        "Poss Won/90", "OP-KP/90", "Sprints/90", "Poss Lost/90"
     ],
     "rank_cols" : [
         "xGP/90", "Goals Allowed/90", "xGP%", 
@@ -39,4 +35,6 @@
         "Shoot": 2,
         "Physical": 3
     }
+
+
 }
