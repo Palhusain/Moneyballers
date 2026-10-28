@@ -50,118 +50,101 @@ def prep_data(df, df_coef):
     )
 
     ## EMGHITUNG BEBERAPA METRIK TAMBAHAN
-    # hitung_metrik = (
-    #     [
-    #         ## MEGHITUNG PERSENTASE EXPECTED GOALS PREVENTED (xGP%/90)
-    #         pl.when(
-    #             (pl.col("xGP") + pl.col("Goals Allowed")) != 0
-    #         )
-    #         .then(
-    #             pl.col("xGP")
-    #             / (pl.col("xGP") + pl.col("Goals Allowed"))
-    #             * 100
-    #         )
-    #         .otherwise(None)
-    #         .round(2)
-    #         .alias("xGP%"),
+    hitung_metrik = (
+        [
+            ## LOSS RATE
+            pl.when(
+                (pl.col('Pas A/90') > 0)
+            )
+            .then(
+                (pl.col("Poss Lost/90") / pl.col("Pas A/90"))
+                * 100
+            )
+            .otherwise(None)
+            .round(2)
+            .alias("Loss Rate"),
 
-    #         ## MEGHITUNG PERSENTASE TEKEL SUKSES (Tackle%/90)
-    #         pl.when(
-    #             pl.col("Tck A") != 0
-    #         )
-    #         .then(
-    #             pl.col("Tck C")
-    #             / pl.col("Tck A")
-    #             * 100
-    #         )
-    #         .otherwise(None)
-    #         .round(2)
-    #         .alias("Tackle%"),
+            ## CREATION INDEX
+            pl.when(
+                (pl.col('OP-KP/90') > 0)
+            )
+            .then(
+                pl.col("xA/90")
+                * (pl.col("xA/90") / pl.col("OP-KP/90"))
+                * 100
+            )
+            .otherwise(None)
+            .round(2)
+            .alias("Creation Index"),
 
-    #         ## MEGHITUNG PERSENTASE DUEL UDARA SUKSES (Tackle%/90)
-    #         pl.when(
-    #             pl.col("Hdrs A") != 0
-    #         )
-    #         .then(
-    #             pl.col("Hdrs")
-    #             / pl.col("Hdrs A")
-    #             * 100
-    #         )
-    #         .otherwise(None)
-    #         .round(2)
-    #         .alias("Hdrs%"),
+            ## SCORING INDEX
+            pl.when(
+                (pl.col('Shots/90') > 0)
+            )
+            .then(
+                pl.col("Goals/90")
+                * (pl.col("xG/90") / pl.col("Shots/90"))
+                * 100
+            )
+            .otherwise(None)
+            .round(2)
+            .alias("Scoring Index"),
 
-    #         ## MEGHITUNG LOSS RATE (LossRate)
-    #         pl.when(
-    #             pl.col("Pas A") != 0
-    #         )
-    #         .then(
-    #             pl.col("Poss Lost/90")
-    #             / pl.sum_horizontal("Ps C", "Poss Lost/90", 'Fouls Against', 'Shots')
-    #             * 100
-    #         )
-    #         .otherwise(None)
-    #         .round(2)
-    #         .alias("Loss%"),
+            ## PRESSURE INDEX
+            pl.when(
+                (pl.col('Pres A/90') > 0)
+            )
+            .then(
+                pl.col("Pres C/90")
+                * (pl.col("Pres C/90") / pl.col("Pres A/90"))
+                * 100
+            )
+            .otherwise(None)
+            .round(2)
+            .alias("Pressure Index"),
 
-    #         ## MEGHITUNG PERSENTASE UMPAN SUKSES (Pass%/90)
-    #         pl.when(
-    #             pl.col("Pas A") != 0
-    #         )
-    #         .then(
-    #             pl.col("Ps C")
-    #             / pl.col("Pas A")
-    #             * 100
-    #         )
-    #         .otherwise(None)
-    #         .round(2)
-    #         .alias("Pass%"),
+            ## Dirty Index 
+            pl.when(
+                ((pl.col("Fouls Made/90") - pl.col("Off/90")) > 0)
+            )
+            .then(
+                (pl.col("Fouls Made/90") - pl.col("Off/90"))
+                * (1 - ((pl.col("Yel/90") + pl.col("Red cards/90")) / (pl.col("Fouls Made/90") - pl.col("Off/90"))))
+                * 100
+            )
+            .otherwise(None)
+            .round(2)
+            .alias("Dirty Index"),
 
-    #         ## MEGHITUNG PERSENTASE UMPAN PROGRESIF (Prog%/90)
-    #         pl.when(
-    #             pl.col("Ps C") != 0
-    #         )
-    #         .then(
-    #             pl.col("PsP")
-    #             / pl.col("Ps C")
-    #             * 100
-    #         )
-    #         .otherwise(None)
-    #         .round(2)
-    #         .alias("Prog%"),
+            ## Reactive Index 
+            (
+                (pl.col("Blk/90") + pl.col("Shts Blckd/90") + pl.col("Clearances/90") + pl.col("K Tck/90"))
+                * (
+                    (pl.col("Blk/90") + pl.col("Shts Blckd/90") + pl.col("Clearances/90") + pl.col("K Tck/90"))
+                    - (pl.col("Blk/90") + pl.col("Shts Blckd/90") + pl.col("Clearances/90") + pl.col("Tck A/90") + pl.col("Pres A/90")) 
+                )
+                # * 100
+            )
+            .round(2)
+            .alias("Reactive Index"),
 
-    #         ## MEGHITUNG PERSENTASE UMPAN SILANG (Cross%/90)
-    #         pl.when(
-    #             pl.col("Cr A") != 0
-    #         )
-    #         .then(
-    #             pl.col("Cr C")
-    #             / pl.col("Cr A")
-    #             * 100
-    #         )
-    #         .otherwise(None)
-    #         .round(2)
-    #         .alias("Cross%"),
+            ## Cheat Index 
+            (
+                pl.col("Fouls Against/90")
+                / (pl.col("Ps C/90") + pl.col("Fouls Against/90") + pl.col("Poss Lost/90") + pl.col("Shots/90")) 
+                * 100
+            )
+            .round(2)
+            .alias("Cheat Index"),
 
-    #         ## MEGHITUNG PERSENTASE TEMBAKAN (Shoot%/90)
-    #         pl.when(
-    #             pl.col("Shots") != 0
-    #         )
-    #         .then(
-    #             pl.col("ShT")
-    #             / pl.col("Shots")
-    #             * 100
-    #         )
-    #         .otherwise(None)
-    #         .round(2)
-    #         .alias("Shoot%"),
-    #     ]
-    # )
 
-    # df_metrik = (
-    #     df_p90
-    #     .with_columns(hitung_metrik)
-    # )
+        ]
+    )
+
+    df_p90 = (
+        df_p90
+        .with_columns(hitung_metrik)
+    )
 
     ### HITUNG PERSENTIL UNTUK TIAP KATEGORI
 
