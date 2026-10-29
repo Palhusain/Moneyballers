@@ -1,23 +1,140 @@
 import polars as pl
 import polars.selectors as cs
 import os, re, json, ast
+import pandas as pd
 from pathlib import Path
 
-def entertainers(df):
-    print('cek')
+with open("raw_data/metrics.json", "r") as f:
+    all_metrics = json.load(f)
 
-def effort(df):
-    print('cek')
+base_metrics = all_metrics["basis"]
 
-def control(df):
-    print('cek')
+class Moneyballers:
+    def __init__(self, df):
+        self.df = df.clone()
 
-def dirty_reactive_cheat(df):
-    print('cek')
+    def entertainers(self):
+        entertainers = self.df[base_metrics]
+        hitung_metrik = (
+            [
+                (self.df["Svt/90"] + self.df["Pens Saved/90"])
+                .alias('gk_index'),
+                (self.df["Svt/90"] + self.df["Pens Saved/90"])
+                .alias('defensive_index'),
+                (self.df["PsP/90"] + self.df["Drb/90"])
+                .alias('progressive_index'),
+                (self.df["OP-KP/90"] + self.df["Shots/90"])
+                .alias('shooting_index'),
+                ((self.df["Poss Lost/90"] + self.df["Off/90"]) * (-1))
+                .alias('frustration_index')
+
+            ]
+        )
+
+        entertainers = (
+            entertainers
+            .with_columns(hitung_metrik)
+        )
+
+        entertainers = entertainers.with_columns(
+            pl.when(pl.col("Best Pos") == "GK")
+            .then(
+                (pl.col("gk_index") + pl.col("gk_index") + pl.col("gk_index")
+                + pl.col("frustration_index") + pl.col("defensive_index")) / 5
+            )
+
+            .when(pl.col("Best Pos") == "D (C)")
+            .then(
+                (pl.col("frustration_index") + pl.col("defensive_index") + pl.col("defensive_index")
+                + pl.col("progressive_index") + pl.col("shooting_index")) / 5
+            )
+
+            .when(pl.col("Best Pos").is_in(['WB (L)', 'WB (R)', 'D (R)', 'D (L)']))
+            .then(
+                (pl.col("frustration_index") + pl.col("defensive_index") + pl.col("progressive_index")
+                + pl.col("progressive_index") + pl.col("shooting_index")) / 5
+            )
+
+            .when(pl.col("Best Pos") == "DM")
+            .then(
+                (pl.col("frustration_index") + pl.col("defensive_index") + pl.col("progressive_index")
+                + pl.col("progressive_index") + pl.col("shooting_index")) / 5
+            )
+
+            .when(pl.col("Best Pos") == "M (C)")
+            .then(
+                pl.max_horizontal([
+                    (pl.col("frustration_index") + pl.col("defensive_index") + pl.col("progressive_index")
+                    + pl.col("progressive_index") + pl.col("shooting_index")) / 5,
+
+                    (pl.col("frustration_index") + pl.col("progressive_index") + pl.col("progressive_index")
+                    + pl.col("shooting_index") + pl.col("shooting_index")) / 5
+                ])
+            )
+
+            .when(pl.col("Best Pos") == "AM (C)")
+            .then(
+                (pl.col("frustration_index") + pl.col("progressive_index") + pl.col("progressive_index")
+                + pl.col("shooting_index") + pl.col("shooting_index")) / 5
+            )
+
+            .when(pl.col("Best Pos").is_in(['AM (R)', 'AM (L)', 'M (R)', 'M (L)']))
+            .then(
+                (pl.col("frustration_index") + pl.col("progressive_index") + pl.col("progressive_index")
+                + pl.col("shooting_index") + pl.col("shooting_index")) / 5
+            )
+
+            .when(pl.col("Best Pos") == "ST (C)")
+            .then(
+                (pl.col("frustration_index") + pl.col("progressive_index") + pl.col("progressive_index")
+                + pl.col("shooting_index") + pl.col("shooting_index")) / 5
+            )
+            .otherwise(None)
+            .round(2)
+            .alias("X-factor")
+        )
+
+        entertainers = entertainers.with_columns(
+            [
+                (
+                    (
+                        pl.col(col)
+                        .rank(method="average")
+                        .over("Best Pos")
+                        * 100
+                        / pl.len().over("Best Pos")
+                    ).round(0)
+                    .alias('X-factor rank')
+                )
+                for col in ['X-factor']
+            ]
+        )
+        
+
+        return entertainers
+
+    def effort(self):
+        print('cek')
+
+    def control(self):
+        print('cek')
+
+    def dirty_reactive_cheat(self):
+        print('cek')
+    
+    def moneyballers(self):
+        result = pd.DataFrame({
+            "entertainers": self.entertainers(),
+            "effort": self.effort(),
+            "control": self.control(),
+            "dirty_reactive_cheat": self.dirty_reactive_cheat()
+        })
 
 
 if __name__ == '__main__':
     
+
+    from weighting import prep_data, league_weight
     file_path = 'raw_data/career/example'
     coef_path = 'raw_data/coef/opta_ranking.json'
     df = pl.read_csv('raw_data/career/example/top 5.csv', separator=';')
@@ -43,4 +160,8 @@ if __name__ == '__main__':
     
     df_coef = league_weight(df_coef, reference_league='Serie A')
     df = prep_data(df, df_coef)
+
+    mb = Moneyballers(df)
+    result = mb.moneyballers()
+    print(result)
     

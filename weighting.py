@@ -49,6 +49,36 @@ def prep_data(df, df_coef):
         [c for c in df_p90.columns if c.endswith("/90")]
     )
 
+    ### HITUNG PERSENTIL UNTUK TIAP KATEGORI
+    df_p90 = (
+        df_p90
+        .with_columns(
+            pl.col("Division").alias("Original Division"),
+            pl.col("Division").replace(mapping).alias("Division")
+        )
+        .join(
+            df_coef.select(
+                ["league", "league_weight"]
+            ),
+            left_on="Division", right_on='league',
+            how="left"
+        )
+    )
+
+    
+    metrics_90 = [m for m in df_p90.columns if m.endswith("/90")]
+    df_weighted = (
+        df_p90
+        .with_columns(
+            [
+                (pl.col(col) * pl.col("league_weight"))
+                .round(2)
+                .alias(f"{col}")
+                for col in metrics_90
+            ]
+        )
+    )
+
     ## EMGHITUNG BEBERAPA METRIK TAMBAHAN
     hitung_metrik = (
         [
@@ -141,103 +171,40 @@ def prep_data(df, df_coef):
         ]
     )
 
-    df_p90 = (
-        df_p90
+    df_weighted = (
+        df_weighted
         .with_columns(hitung_metrik)
     )
 
-    ### HITUNG PERSENTIL UNTUK TIAP KATEGORI
-
-    df_p90 = (
-        df_p90
-        .with_columns(
-            pl.col("Division").alias("Original Division"),
-            pl.col("Division").replace(mapping).alias("Division")
-        )
-        .join(
-            df_coef.select(
-                ["league", "league_weight"]
-            ),
-            left_on="Division", right_on='league',
-            how="left"
-        )
-    )
-
-    metrics_90 = [m for m in df_p90.columns if m.endswith("/90")]
-    df_weighted = (
-        df_p90
-        .with_columns(
-            [
-                (pl.col(col) * pl.col("league_weight"))
-                .round(2)
-                .alias(f"{col}")
-                for col in metrics_90
-            ]
-        )
-    )
+    metrics_index = [m for m in df_weighted.columns if m.endswith(" Index")] + ['Loss Rate']
 
     # n = df_metrik.height
     # inverse_cols = {"Loss%_adj"}  # bisa lebih dari satu
-    # cols_to_rank = [m for m in df_metrik.columns if m.endswith("%")] + [m for m in df_metrik.columns if m.endswith("_adj")]
-    # df_percentile = df_metrik.with_columns(
-    #     [
-    #         (
-    #             lambda rank_expr: (
-    #                 pl.when(pl.col(col).is_null())
-    #                 .then(0)
-    #                 .otherwise(
-    #                     100 - rank_expr if col in inverse_cols else rank_expr
-    #                 )
-    #                 .alias(f"{col}_rank")
-    #             )
-    #         )(
-    #             (
-    #                 pl.col(col)
-    #                 .rank(method="average")
-    #                 .over("Best Pos")
-    #                 * 100
-    #                 / pl.len().over("Best Pos")
-    #             ).round(0)
-    #         )
-    #         for col in cols_to_rank
-    #     ]
-    # ).drop(metrics)
+    cols_to_rank = metrics_90 + metrics_index
+    df_percentile = df_weighted.with_columns(
+        [
+            (
+                (
+                    pl.col(col)
+                    .rank(method="average")
+                    .over("Best Pos")
+                    * 100
+                    / pl.len().over("Best Pos")
+                ).round(0)
+            )
+            for col in cols_to_rank
+        ]
+    )
 
     output_path = 'output'
     os.makedirs(output_path, exist_ok=True)
 
     df_p90.write_csv(f"{output_path}/df_p90.csv", separator=";")
     df_weighted.write_csv(f"{output_path}/df_weighted.csv", separator=";")
-    # df_percentile.write_csv(f"{output_path}/df_percentile.csv", separator=";")
+    df_percentile.write_csv(f"{output_path}/df_percentile.csv", separator=";")
 
-    return df_weighted
+    return df_percentile
 
-def calculate_custom_percentile(df_player, df_metrik, comparison):
-    with open("raw_data/metrics.json", "r") as f:
-        all_metrics = json.load(f)
-
-    rank_cols = all_metrics["rank_cols"]
-
-    compare_df = df_metrik.filter(
-        pl.col("Best Pos") == comparison
-    )
-
-    result = {}
-
-    for col in rank_cols:
-        value = df_player[col]
-        values = compare_df[col].drop_nulls()
-
-        if value is None or len(values) == 0:
-            result[f"{col}_rank"] = 0
-        else:
-            result[f"{col}_rank"] = round(
-                (values <= value).sum()
-                / len(values)
-                * 100
-            )
-
-    return result
 
 
 if __name__ == '__main__':
