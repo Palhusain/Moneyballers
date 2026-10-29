@@ -35,6 +35,17 @@ def prep_data(df, df_coef):
             mapping[league] = group
 
     ### LOAD DATA
+    df = (
+        df
+        .with_columns(
+            pl.col("Distance")
+            .str.replace("km", "")
+            .alias("Distance")
+        )
+        .with_columns(
+            pl.col("Distance").cast(pl.Float64)
+        )
+    )
 
     ### UBAH KE PER 90 MENIT
     metrics = [c for c in df.columns if c not in exclude]

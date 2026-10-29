@@ -27,7 +27,6 @@ class Moneyballers:
                 .alias('shooting_index'),
                 ((self.df["Poss Lost/90"] + self.df["Off/90"]) * (-1))
                 .alias('frustration_index')
-
             ]
         )
 
@@ -110,17 +109,176 @@ class Moneyballers:
             ]
         )
         
-
         return entertainers
 
+
     def effort(self):
-        print('cek')
+        effort = self.df[base_metrics]
+        hitung_metrik = (
+            [
+                ((self.df["Sprints/90"] + self.df["Distance/90"]) / 2)
+                .round(2)
+                .alias('running_index'),
+                ((self.df["Pres A/90"] + self.df["Tck A/90"] + self.df["Hdrs A/90"]) / 3)
+                .round(2)
+                .alias('engagement_index'),
+            ]
+        )
+
+        effort = (
+            effort
+            .with_columns(hitung_metrik)
+        )
+
+        effort = (
+            effort
+            .with_columns(
+                ((pl.col("running_index") + pl.col("engagement_index")) / 2)
+                .round(2)
+                .alias('Effort score'),
+            )
+        )
+
+        effort = effort.with_columns(
+            [
+                (
+                    (
+                        pl.col(col)
+                        .rank(method="average")
+                        .over("Best Pos")
+                        * 100
+                        / pl.len().over("Best Pos")
+                    ).round(0)
+                    .alias('Effort rank')
+                )
+                for col in ['Effort score']
+            ]
+        )
+
+        return effort
+
 
     def control(self):
-        print('cek')
+        control = self.df[base_metrics]
+        hitung_metrik = (
+            [
+                (((self.df["Pressure Index"] + 4*self.df["Poss Won/90"]) / 5) * (1 - self.df["Loss Rate"] / 100))
+                .round(2)
+                .alias('Defend'),
+                (((self.df["Creation Index"] + 2*self.df["Poss Won/90"] + 2*self.df["Pressure Index"]) / 5) * (1 - self.df["Loss Rate"] / 100))
+                .round(2)
+                .alias('Support'),
+                (((self.df["Scoring Index"] + self.df["Pressure Index"] + 3*self.df["Creation Index"]) / 5) * (1 - self.df["Loss Rate"] / 100))
+                .round(2)
+                .alias('Create'),
+                (((3*self.df["Scoring Index"] + self.df["Pressure Index"] + self.df["Creation Index"]) / 5) * (1 - self.df["Loss Rate"] / 100))
+                .round(2)
+                .alias('Score'),
+            ]
+        )
+
+        control = (
+            control
+            .with_columns(hitung_metrik)
+        )
+
+        control = control.with_columns(
+            pl.when(pl.col("Best Pos").is_in(["GK", "D (C)", "DM"]))
+            .then(pl.col("Defend"))
+
+            .when(pl.col("Best Pos").is_in(['WB (L)', 'WB (R)', 'D (R)', 'D (L)']))
+            .then(pl.col("Support"))
+
+            .when(pl.col("Best Pos").is_in(['M (C)']))
+            .then(
+                pl.max_horizontal([
+                    pl.col("Support"), 
+                    pl.col("Create"), 
+                    pl.col("Score")
+                ])
+            )
+
+            .otherwise(
+                pl.max_horizontal([
+                    pl.col("Create"),
+                    pl.col("Score")
+                ])
+            )
+
+            .alias("Best Score")
+        )
+
+        nilai_dicari = control["Best Score"]
+
+        kolom_cari = ["Defend", "Support", "Create","Score"]
+
+        control = (
+            control.with_columns(
+                pl.coalesce([
+                    pl.when(pl.col(kol) == pl.col("Best Score"))
+                    .then(pl.lit(kol))
+                    .otherwise(None)
+                    for kol in kolom_cari
+                ]).alias("Function")
+            )
+        )
+
+        control = control.with_columns(
+            [
+                (
+                    (
+                        pl.col(col)
+                        .rank(method="average")
+                        .over("Best Pos")
+                        * 100
+                        / pl.len().over("Best Pos")
+                    ).round(0)
+                    .alias('Function rank')
+                )
+                for col in ['Best Score']
+            ]
+        )
+
+        return control
+
 
     def dirty_reactive_cheat(self):
-        print('cek')
+        # ['ST (C)', 'M (R)', 'AM (C)', 'D (L)', 'WB (L)', 'M (C)', 'M (L)', 'GK', 'D (R)', 'WB (R)', 'AM (L)', 'D (C)', 'AM (R)', 'DM']
+        dirty_reactive_cheat = self.df[base_metrics + ["Dirty Index", "Reactive Index", "Cheat Index"]]
+
+        dirty_reactive_cheat = dirty_reactive_cheat.with_columns(
+            pl.when(pl.col("Best Pos") == "D (C)")
+            .then(
+                (pl.col("Dirty Index") + 2*pl.col("Reactive Index")) / 3
+            )
+            .when(pl.col("Best Pos").is_in(('M (R)', 'AM (C)', 'D (L)', 'WB (L)', 'M (C)', 'M (L)', 'D (R)', 'WB (R)', 'DM')))
+            .then(
+                (pl.col("Dirty Index") + pl.col("Reactive Index") + pl.col("Cheat Index")) / 3
+            )
+            .otherwise(
+                (pl.col("Dirty Index") + 2*pl.col("Cheat Index")) / 3
+            )
+            .round(2)
+            .alias("Dirty Reactive Cheat")
+        )
+
+        dirty_reactive_cheat = dirty_reactive_cheat.with_columns(
+            [
+                (
+                    (
+                        pl.col(col)
+                        .rank(method="average")
+                        .over("Best Pos")
+                        * 100
+                        / pl.len().over("Best Pos")
+                    ).round(0)
+                    .alias('DRC rank')
+                )
+                for col in ['Dirty Reactive Cheat']
+            ]
+        )
+
+        return dirty_reactive_cheat
     
     def moneyballers(self):
         result = pd.DataFrame({

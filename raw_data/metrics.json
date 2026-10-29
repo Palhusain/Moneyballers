@@ -17,9 +17,9 @@
         "Expires", "Minutes", "Poss Won/90", "OP-KP/90", "Sprints/90", "Poss Lost/90", "Goals Allowed/90", 
         "xGP/90", "Svt/90", "Pens Saved/90", "Blk/90", "Shts Blckd/90", "Clearances/90", "Itc/90", "Tck A/90", 
         "K Tck/90", "Hdrs A/90", "Hdrs/90", "Pres A/90", "Pres C/90", "Fouls Made/90", "Off/90", "Yel/90", 
-        "Red cards/90", "Pas A/90", "Ps C/90", "PsP/90", "xA/90", "Drb/90", "Fouls Against/90", "Shots/90", 
-        "Goals/90", "xG/90", "Original Division", "league_weight", "Loss Rate", "Creation Index", "Scoring Index", 
-        "Pressure Index", "Dirty Index", "Reactive Index", "Cheat Index"
+        "Red cards/90", "Pas A/90", "Ps C/90", "PsP/90", "xA/90", "Drb/90", "Fouls Against/90", "Distance/90", 
+        "Shots/90", "Goals/90", "xG/90", "Original Division", "league_weight", "Loss Rate", "Creation Index", 
+        "Scoring Index", "Pressure Index", "Dirty Index", "Reactive Index", "Cheat Index"
     ],
     "pizza": [
         "xGP%",
