@@ -103,7 +103,7 @@ class Moneyballers:
                         * 100
                         / pl.len().over("Best Pos")
                     ).round(0)
-                    .alias('X-factor rank')
+                    .alias('X-factor Score')
                 )
                 for col in ['X-factor']
             ]
@@ -135,7 +135,7 @@ class Moneyballers:
             .with_columns(
                 ((pl.col("running_index") + pl.col("engagement_index")) / 2)
                 .round(2)
-                .alias('Effort score'),
+                .alias('Effort index'),
             )
         )
 
@@ -149,9 +149,9 @@ class Moneyballers:
                         * 100
                         / pl.len().over("Best Pos")
                     ).round(0)
-                    .alias('Effort rank')
+                    .alias('Effort Score')
                 )
-                for col in ['Effort score']
+                for col in ['Effort index']
             ]
         )
 
@@ -233,7 +233,7 @@ class Moneyballers:
                         * 100
                         / pl.len().over("Best Pos")
                     ).round(0)
-                    .alias('Function rank')
+                    .alias('Control Score')
                 )
                 for col in ['Best Score']
             ]
@@ -272,7 +272,7 @@ class Moneyballers:
                         * 100
                         / pl.len().over("Best Pos")
                     ).round(0)
-                    .alias('DRC rank')
+                    .alias('DRC Score')
                 )
                 for col in ['Dirty Reactive Cheat']
             ]
@@ -280,20 +280,31 @@ class Moneyballers:
 
         return dirty_reactive_cheat
     
+
     def moneyballers(self):
-        result = pd.DataFrame({
-            "entertainers": self.entertainers(),
-            "effort": self.effort(),
-            "control": self.control(),
-            "dirty_reactive_cheat": self.dirty_reactive_cheat()
-        })
+        # result = pd.DataFrame({
+        #     "entertainers": self.entertainers(),
+        #     "effort": self.effort(),
+        #     "control": self.control(),
+        #     "dirty_reactive_cheat": self.dirty_reactive_cheat()
+        # })
+
+        basis = self.df[base_metrics].columns
+
+        result = (
+            self.entertainers()
+            .join(self.effort(), on=basis, how="left")
+            .join(self.control(), on=basis, how="left")
+            .join(self.dirty_reactive_cheat(), on=basis, how="left")
+        )
+
+        return result
 
 
 if __name__ == '__main__':
     
 
     from weighting import prep_data, league_weight
-    file_path = 'raw_data/career/example'
     coef_path = 'raw_data/coef/opta_ranking.json'
     df = pl.read_csv('raw_data/career/example/top 5.csv', separator=';')
     

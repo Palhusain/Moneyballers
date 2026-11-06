@@ -29,12 +29,13 @@
         "Shots/90_adj", "Shoot%", 
         "Hdrs%", "Sprints/90_adj", "Dist/90_adj"
     ],
-    "category": {
-        "Keeper": 1,
+    "Index": {
+        "base": ["Name", "Best Pos"],
+        "Entertainers": ["gk_index", "defensive_index", "progressive_index", "shooting_index", "frustration_index", "X-factor", "X-factor Score"],
         "Defense": 5,
         "Progression": 5,
         "Shoot": 2,
-        "Physical": 3
+        "All Metode": ["X-factor Score", "Effort Score", "Control Score", "DRC Score"]
     }
 
 
